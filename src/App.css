@@ -71,8 +71,8 @@ body {
   text-align: center;
   font-size: 1.2rem;
   margin-top: 0;      /* No margin from the top */
-  padding-top: 10px;  /* Small padding if you want a little breathing space */
-  margin-bottom: 20px; /* Keep space below if you want */
+  padding-top: 5px;  /* Small padding if you want a little breathing space */
+  margin-bottom: 10px; /* Keep space below if you want */
 }
 
 .input-field {

@@ -103,6 +103,7 @@ body {
   transition: all 0.3s ease; /* Smooth transition for hover effects */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
   margin-top: 20px;
+  margin-bottom: 20px;
 }
 
 /* Hover effects */

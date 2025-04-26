@@ -98,7 +98,7 @@ function App() {
     if (typeof num === 'number') {
       return num.toLocaleString();
     }
-    return '';
+    return '';  
   };
 
   const checkFieldsAndSend = async () => {
@@ -108,12 +108,13 @@ function App() {
       setPopupMessage(SUCCESS_MESSAGE);
       setPopupStyle({
         position: 'fixed',
-        top: '40%',
-        left: '57%',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
         height: '200px',
-        width: '400px',
-        transform: 'translate(-80%, 0)',
-        fontSize: '35px',
+        width: '90%', // smaller width for mobile
+        maxWidth: '400px', // still limits width on desktop
+        fontSize: '30px',
         color: 'green',
         fontWeight: 'bold',
         textAlign: 'center',
@@ -160,6 +161,7 @@ function App() {
     } else {
       setPopupMessage('חסרות תשובות שלא מולאו');
       setPopupStyle({
+        bottom: '20px',
         backgroundColor: 'transparent',
         color: 'black',
         fontWeight: 'bold',
@@ -200,10 +202,6 @@ function App() {
             <div className="drill-grid">
               {Array.from({ length: 10 }).map((_, i) => (
                 <div key={i} className="drill-row">
-                  <span className="number-field">{event ? formatNumber(event[`ex${i + 1}_left`]) : `Left ${i + 1}`}</span>
-                  <span className="multiplication-sign">X</span>
-                  <span className="number-field">{event ? formatNumber(event[`ex${i + 1}_right`]) : `Right ${i + 1}`}</span>
-                  <span className="equal-sign">=</span>
                   <input
                     type="text"
                     className="input-field result-field"
@@ -211,6 +209,10 @@ function App() {
                     value={results[i]}
                     onChange={(e) => handleResultChange(i, e)}
                   />
+                  <span className="equal-sign">=</span>
+                  <span className="number-field">{event ? formatNumber(event[`ex${i + 1}_right`]) : `Right ${i + 1}`}</span>
+                  <span className="multiplication-sign">X</span>
+                  <span className="number-field">{event ? formatNumber(event[`ex${i + 1}_left`]) : `Left ${i + 1}`}</span>
                 </div>
               ))}
             </div>

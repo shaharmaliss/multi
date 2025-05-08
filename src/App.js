@@ -235,7 +235,7 @@ function App() {
                 className="send-button"
                 onClick={checkFieldsAndSend}
               >
-                תוצאות לשלוח
+                לשלוח תוצאות
               </button>
             </div>
           )}

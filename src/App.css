@@ -154,7 +154,7 @@ body {
   display: flex;
   align-items: center;
   gap: 11px; /* horizontal spacing between elements */
-  margin-bottom: 8px; /* vertical spacing between rows */
+  margin-bottom: 15px; /* vertical spacing between rows */
 }
 
 html, body {
@@ -162,4 +162,79 @@ html, body {
   padding: 0;
   height: 100%;
   overflow: hidden; /* Prevent vertical scrolling */
+}
+
+
+.styled-input,
+.styled-textarea {
+  width: 100%;
+  height: 45px;
+  max-width: 500px;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 0px;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  margin-bottom: 10px;
+  background-color: white;
+  font-family: 'Varela Round', sans-serif;
+  box-sizing: border-box;
+}
+
+.styled-input::placeholder,
+.styled-textarea::placeholder {
+  color: black;
+  opacity: 1; /* Make sure it's fully visible */
+}
+
+.styled-textarea {
+  resize: vertical;
+}
+
+.styled-input1,
+.styled-textarea1 {
+  width: 100%;
+  height: 145px;
+  max-width: 500px;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 0px;
+  border: 1px solid #ccc;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  margin-bottom: 10px;
+  background-color: white;
+  font-family: 'Varela Round', sans-serif;
+  box-sizing: border-box;
+}
+
+.styled-input1::placeholder,
+.styled-textarea1::placeholder {
+  color: black;
+  opacity: 1; /* Make sure it's fully visible */
+}
+
+.remark-massage {
+  direction: rtl;
+  text-align: center;
+  font-size: 1.2rem; /* Adjust font size here */
+  margin-bottom: 15px; /* Add space below the message */
+  color: #004d40;
+}
+
+.form-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.input-field-new-card {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  width: 100%;
+  box-sizing: border-box;
 }

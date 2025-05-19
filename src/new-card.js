@@ -160,7 +160,7 @@ function NewCard() {
           onChange={handleChange}
           required
         >
-          <option value="" >בחירת שעה לקבלת התרגילים</option>
+          <option value="" >שעה לקבלת התרגילים</option>
           {drillHours.map((hour) => (
   <option key={hour} value={hour} style={{ fontSize: '10px' }}>{hour}</option>
 ))}
@@ -173,7 +173,7 @@ function NewCard() {
           onChange={handleChange}
           required
         >
-          <option value="">בחירת שעה לקבלת תזכורת במידה ולא הוגשו התרגילים</option>
+          <option value="">שעה לקבלת תזכורת שלא הוגשו תרגילים</option>
           {reminderHours.map((hour) => (
             <option key={hour} value={hour}>{hour}</option>
           ))}

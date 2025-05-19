@@ -16,7 +16,7 @@ function NewCard() {
 
   const levels = ['\u200E6 X 1', '\u200E4 X 3', '\u200E6 X 5', '\u200E9 X 7', '\u200E32 X 3', '\u200E87 X 9', 
                   '\u200E48 X 19', '\u200E153 X 29','\u200E2,599 X 45', '\u200E39,550 X 322',];
-  const drillHours = ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+  const drillHours = ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
   const reminderHours = ['14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
 
   const handleChange = (e) => {
@@ -160,14 +160,27 @@ function NewCard() {
           onChange={handleChange}
           required
         >
-          <option value="">בחירת שעה לקבלת התרגילים</option>
+          <option value="" >בחירת שעה לקבלת התרגילים</option>
           {drillHours.map((hour) => (
+  <option key={hour} value={hour} style={{ fontSize: '10px' }}>{hour}</option>
+))}
+        </select>
+
+        <select
+          name="reminderHour"
+          className="styled-input"
+          value={formData.reminderHour}
+          onChange={handleChange}
+          required
+        >
+          <option value="">בחירת שעה לקבלת תזכורת במידה ולא הוגשו התרגילים</option>
+          {reminderHours.map((hour) => (
             <option key={hour} value={hour}>{hour}</option>
           ))}
         </select>
 
         <button type="submit" className="send-button" style={{ marginTop: '20px' }}>
-          הוסף כרטיס חדש
+          הירשם לשירות
         </button>
       </form>
     </div>

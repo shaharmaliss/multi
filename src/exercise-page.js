@@ -1,15 +1,16 @@
-// ExercisePage.js
+//  exercise_page.js
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import './App.css';
 
-
+const LEVEL_WITH_IMAGE_REQUIREMENT = 6;
 // Airtable fetching function for events
 async function fetchEvents() {
   const apiKey = 'pathzPdbSCEKZkZDi.eb39078e504fa6b1f4ecc919d7cd83c81832eb10bd5461fb55ddc544bd8db2b7'; // Replace with your Airtable API key
   const baseId = 'appNo45MQ8ifBdz6f'; // Replace with your Airtable base ID
   const tableName = 'events'; // Table name in Airtable
 
+  
   const response = await fetch(`https://api.airtable.com/v0/${baseId}/${tableName}`, {
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -20,6 +21,7 @@ async function fetchEvents() {
   return data.records.map((record) => ({
     event_code: record.fields.event_code,
     card_code: record.fields.card_code,
+    level: record.fields.level,
     event_counter: record.fields.event_counter !== undefined && record.fields.event_counter !== null 
     ? record.fields.event_counter 
     : 666,
@@ -81,6 +83,9 @@ function ExercisePage() {
     fetchData();
   }, [eventCode, cardCode]);
 
+const [uploadedFile, setUploadedFile] = useState(null);
+
+
   const handleResultChange = (index, e) => {
     let value = e.target.value.replace(/,/g, '');
 
@@ -103,77 +108,99 @@ function ExercisePage() {
     return '';  
   };
 
-  const checkFieldsAndSend = async () => {
-    const allFieldsFilled = results.every((result) => result !== '');
+const [selectedFile, setSelectedFile] = useState(null);
+const [uploadedFileUrl, setUploadedFileUrl] = useState('');
 
-    if (allFieldsFilled) {
-      setPopupMessage(SUCCESS_MESSAGE);
-      setPopupStyle({
-        position: 'fixed',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        height: '200px',
-        width: '90%', // smaller width for mobile
-        maxWidth: '400px', // still limits width on desktop
-        fontSize: '30px',
-        color: 'green',
-        fontWeight: 'bold',
-        textAlign: 'center',
-        zIndex: 9999,
-        backgroundColor: 'transparent',
-        padding: '20px',
-        borderRadius: '12px',
-      });
-      setIsPopupVisible(true);
+const handleImageUpload = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    setSelectedFile(file);
+  }
+};
 
-      const dataToSend = {
-        event_code: event ? event.event_code : '',
-        card_code: event ? event.card_code : '',
-        event_counter: event ? event.event_counter : '',
-        ex1_result: results[0].replace(/,/g, ''),
-        ex2_result: results[1].replace(/,/g, ''),
-        ex3_result: results[2].replace(/,/g, ''),
-        ex4_result: results[3].replace(/,/g, ''),
-        ex5_result: results[4].replace(/,/g, ''),
-        ex6_result: results[5].replace(/,/g, ''),
-        ex7_result: results[6].replace(/,/g, ''),
-        ex8_result: results[7].replace(/,/g, ''),
-        ex9_result: results[8].replace(/,/g, ''),
-        ex10_result: results[9].replace(/,/g, ''),
-      };
+ const checkFieldsAndSend = async () => {
+  const allFieldsFilled = results.every((result) => result !== '');
 
-      try {
-        const response = await fetch('https://hook.eu2.make.com/41ke6o4sksybyisgobo8k25pfw25qaoh', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(dataToSend),
-        });
+  if (!allFieldsFilled) {
+    setPopupMessage('חסרות תשובות שלא מולאו');
+    setPopupStyle({
+      bottom: '20px',
+      backgroundColor: 'transparent',
+      color: 'black',
+      fontWeight: 'bold',
+      border: '2px solid black',
+      padding: '10px 50px',
+      borderRadius: '12px',
+    });
+    setIsPopupVisible(true);
+    return;
+  }
 
-        if (response.ok) {
-          console.log('Webhook sent successfully');
-        } else {
-          console.error('Error sending webhook:', response.statusText);
-        }
-      } catch (error) {
-        console.error('Error sending webhook:', error);
-      }
-    } else {
-      setPopupMessage('חסרות תשובות שלא מולאו');
-      setPopupStyle({
-        bottom: '20px',
-        backgroundColor: 'transparent',
-        color: 'black',
-        fontWeight: 'bold',
-        border: '2px solid black',
-        padding: '10px 50px',
-        borderRadius: '12px',
-      });
-      setIsPopupVisible(true);
-    }
-  };
+  if (event?.level >= LEVEL_WITH_IMAGE_REQUIREMENT && !selectedFile)  {
+    alert('נא להעלות תמונה לפני שליחה');
+    return;
+  }
+
+  // Show success popup (even before upload finishes — you may want to delay this if needed)
+  setPopupMessage(SUCCESS_MESSAGE);
+  setPopupStyle({
+    position: 'fixed',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    height: '200px',
+    width: '90%',
+    maxWidth: '400px',
+    fontSize: '30px',
+    color: 'green',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    zIndex: 9999,
+    backgroundColor: 'transparent',
+    padding: '20px',
+    borderRadius: '12px',
+  });
+  setIsPopupVisible(true);
+
+try {
+  // Build one FormData object with everything
+  const formData = new FormData();
+  
+  if (selectedFile) {
+    const fileExtension = selectedFile.name.split('.').pop(); // Keep original extension
+    const fileName = `${event?.event_code || 'noevent'}_${event?.card_code || 'nocard'}.${fileExtension}`;
+    formData.append('file', selectedFile, fileName);
+  } else {
+    // Send a small .txt file with the content "empty file"
+  const emptyContent = new Blob(['empty file'], { type: 'text/plain' });
+  formData.append('file', emptyContent, 'empty.txt');
+  }
+
+
+  formData.append('event_code', event?.event_code || '');
+  formData.append('card_code', event?.card_code || '');
+  formData.append('event_counter', event?.event_counter ?? '');
+
+  results.forEach((result, index) => {
+    formData.append(`ex${index + 1}_result`, result.replace(/,/g, ''));
+  });
+
+  // Send one POST request with image and all the other data
+  const response = await fetch('https://hook.eu2.make.com/41ke6o4sksybyisgobo8k25pfw25qaoh', {
+    method: 'POST',
+    body: formData, // Not JSON
+  });
+
+  if (!response.ok) {
+    console.error('Failed to send data');
+  } else {
+    console.log('Data sent successfully');
+  }
+} catch (err) {
+    console.error('Error during upload or send:', err);
+  }
+};
+
 
   const closePopup = () => {
     setIsPopupVisible(false);
@@ -190,7 +217,7 @@ function ExercisePage() {
         </p>
       ) : (
         <>
-          {popupMessage !== SUCCESS_MESSAGE && (
+          {event && !error && popupMessage !== SUCCESS_MESSAGE && (
             <p className="welcome-message">
               היי {childName || ''},<br />
               הנה עשרת התרגילים שלך להיום. <br />
@@ -222,33 +249,49 @@ function ExercisePage() {
             </div>
           )}
 
+{event && !error && popupMessage !== SUCCESS_MESSAGE && (
+  <div className="button-row">
+    {event?.level >= LEVEL_WITH_IMAGE_REQUIREMENT && (
+      <>
+        <label htmlFor="file-upload" className="custom-upload">
+          📸 טיוטה
+        </label>
+        <input
+          id="file-upload"
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          style={{ display: 'none' }}
+        />
+      </>
+    )}
+
+    <button
+      style={{ backgroundColor: buttonColor, color: 'white' }}
+      className="send-button"
+      onClick={checkFieldsAndSend}
+    >
+      לשלוח תוצאות
+    </button>
+  </div>
+)}
+
+
 {isPopupVisible && (
   <div className="popup" style={popupStyle}>
     {popupMessage}
-    {/* Only show the X button if the message is not SUCCESS_MESSAGE */}
     {popupMessage !== SUCCESS_MESSAGE && (
       <button className="close-popup" onClick={closePopup}>X</button>
     )}
   </div>
 )}
 
-          {popupMessage !== SUCCESS_MESSAGE && (
-            <div className="button-container">
-              <button
-                style={{ backgroundColor: buttonColor, color: 'white' }}
-                className="send-button"
-                onClick={checkFieldsAndSend}
-              >
-                לשלוח תוצאות
-              </button>
-            </div>
-          )}
         </>
       )}
     </div>
   );
 }
 
-export default ExercisePage;
+export default  ExercisePage;
 
 

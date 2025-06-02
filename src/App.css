@@ -238,3 +238,34 @@ html, body {
   width: 100%;
   box-sizing: border-box;
 }
+
+
+.custom-upload {
+  display: inline-block;
+  background-color: white;
+  color: #217678;
+  padding: 10px 20px;
+  font-size: 13px;
+  border: 1px solid #c0bfbf;
+  border-radius: 0px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.3s;
+  text-align: align-right;
+  height: 15px;
+  
+}
+
+.custom-upload:hover {
+  background-color: #fff7f7;
+
+
+}
+
+  .button-row {
+  display: flex;
+  justify-content: center; /* center them horizontally */
+  gap: 45px; /* space between buttons */
+  margin-top: 1px;
+  flex-wrap: wrap; /* allows wrap on small screens */
+}

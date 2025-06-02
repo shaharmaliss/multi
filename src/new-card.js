@@ -72,19 +72,19 @@ function NewCard() {
 
   return (
     <div className="App">
-      <p className="remark-massage">
-        כדי להירשם ולהתחיל לקבל ממחר סט תרגילים, <br />
-        יש להשאיר את כל הפרטים הבאים. <br />
+      <p className="remark-massage" style={{ fontSize: '16px' }}>
+        כדי להירשם ולקבל החל ממחר סט תרגילים יומי, <br />
+        יש למלא את כל הפרטים הבאים. <br />
         <br />
-        במידה וישנה בעיה או שלא התקבלה הודעת וואטסאפ, <br />
-         ניתן לפנות אלינו מכאן:<br />
+        אם נתקלתם בבעיה או לא התקבלה הודעת וואטסאפ, <br />
+        ניתן ליצור איתנו קשר בקישור הבא:<br />
       <a
         href="https://main.d68e8t2303m09.amplifyapp.com/new-remark"
         target="_blank"
         rel="noopener noreferrer"
-        style={{ color: '#007bff', textDecoration: 'underline' }}
+        style={{ color: '#007bff', textDecoration: 'underline' ,fontSize: '16px' }}
       >
-        לחצו כאן לפנייה
+        לחצו כאן 
       </a>
       </p>
 
@@ -190,7 +190,7 @@ function NewCard() {
           ))}
         </select>
 
-        <button type="submit" className="send-button" style={{ marginTop: '20px' }}>
+        <button type="submit" className="send-button" style={{ marginTop: '5px' , fontSize: '12px'}}>
           הירשם לשירות
         </button>
       </form>

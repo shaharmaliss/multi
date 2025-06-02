@@ -48,7 +48,7 @@ function NewCard() {
     });
 
     if (response.ok) {
-      alert('הטופס נשלח בהצלחה!');
+      alert('תודה שנרשמתם');
       // Optional: reset form
       setFormData({
         parentName: '',
@@ -74,7 +74,18 @@ function NewCard() {
     <div className="App">
       <p className="remark-massage">
         כדי להירשם ולהתחיל לקבל ממחר סט תרגילים, <br />
-        יש להשאיר את כל הפרטים הבאים <br />
+        יש להשאיר את כל הפרטים הבאים. <br />
+        <br />
+        במידה וישנה בעיה או שלא התקבלה הודעת וואטסאפ, <br />
+         ניתן לפנות אלינו מכאן:<br />
+      <a
+        href="https://main.d68e8t2303m09.amplifyapp.com/new-remark"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ color: '#007bff', textDecoration: 'underline' }}
+      >
+        לחצו כאן לפנייה
+      </a>
       </p>
 
       <form onSubmit={handleSubmit} className="form-grid">

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import './App.css';
 
-const LEVEL_WITH_IMAGE_REQUIREMENT = 6;
+const LEVEL_WITH_IMAGE_REQUIREMENT = 8;
 // Airtable fetching function for events
 async function fetchEvents() {
   const apiKey = 'pathzPdbSCEKZkZDi.eb39078e504fa6b1f4ecc919d7cd83c81832eb10bd5461fb55ddc544bd8db2b7'; // Replace with your Airtable API key

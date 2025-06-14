@@ -343,12 +343,14 @@ setPopupStyle({
       <span className="number-field">{formatNumber(right)}</span>
       <span className="equal-sign">=</span>
       <input
-          type="text"
-          className={inputClass}
-          value={displayResult(results[i])}
-          placeholder="תוצאה"
-          onChange={(e) => handleResultChange(i, e)}
-        />
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            className={inputClass}
+            value={displayResult(results[i])}
+            placeholder="תוצאה"
+            onChange={(e) => handleResultChange(i, e)}
+          />
     </div>
   );
 })}

@@ -153,8 +153,19 @@ body {
 .drill-row {
   display: flex;
   align-items: center;
-  gap: 11px; /* horizontal spacing between elements */
+  gap: 1px; /* horizontal spacing between elements */
   margin-bottom: 15px; /* vertical spacing between rows */
+  direction: ltr; /* Force left-to-right order */
+}
+
+.drill-number {
+  color: blue;
+  font-size: 20px;
+  font-weight: bold;
+  margin-right: 1px; /* spacing between the number and the next element */
+  width: 30px;            /* FIXED width, not min-width */
+  display: inline-block;
+  text-align: right;   /* align numbers to the right so the dot stays aligned */
 }
 
 html, body {
@@ -227,7 +238,7 @@ html, body {
   gap: 4px;
   max-width: 400px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 10px;
 }
 
 .input-field-new-card {
@@ -269,3 +280,25 @@ html, body {
   margin-top: 1px;
   flex-wrap: wrap; /* allows wrap on small screens */
 }
+
+.result-field {
+  width: 80px;
+  text-align: center;
+  border: 1px solid #ccc;
+  padding: 4px;
+  font-size: 14px;
+}
+
+.result-correct {
+  background-color: #d4edda; /* light green */
+  border-color: #28a745;     /* dark green border */
+  color: #155724;
+}
+
+.result-wrong {
+  background-color: #f8d7da; /* light red */
+  border-color: #dc3545;     /* dark red border */
+  color: #721c24;
+}
+
+

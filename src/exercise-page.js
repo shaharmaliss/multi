@@ -1,3 +1,4 @@
+
 //  exercise_page.js
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
@@ -6,11 +7,10 @@ import './App.css';
 const LEVEL_WITH_IMAGE_REQUIREMENT = 6;
 // Airtable fetching function for events
 async function fetchEvents() {
-  const apiKey = 'pathzPdbSCEKZkZDi.eb39078e504fa6b1f4ecc919d7cd83c81832eb10bd5461fb55ddc544bd8db2b7'; // Replace with your Airtable API key
-  const baseId = 'appNo45MQ8ifBdz6f'; // Replace with your Airtable base ID
-  const tableName = 'events'; // Table name in Airtable
+  const apiKey = 'pathzPdbSCEKZkZDi.eb39078e504fa6b1f4ecc919d7cd83c81832eb10bd5461fb55ddc544bd8db2b7';
+  const baseId = 'appNo45MQ8ifBdz6f';
+  const tableName = 'events';
 
-  
   const response = await fetch(`https://api.airtable.com/v0/${baseId}/${tableName}`, {
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -22,32 +22,53 @@ async function fetchEvents() {
     event_code: record.fields.event_code,
     card_code: record.fields.card_code,
     level: record.fields.level,
-    event_counter: record.fields.event_counter !== undefined && record.fields.event_counter !== null 
-    ? record.fields.event_counter 
-    : 666,
+    event_counter:
+      record.fields.event_counter !== undefined && record.fields.event_counter !== null
+        ? record.fields.event_counter
+        : 666,
     ...record.fields,
   }));
 }
 
-async function fetchCard(childCode) {
-  const apiKey = 'pathzPdbSCEKZkZDi.eb39078e504fa6b1f4ecc919d7cd83c81832eb10bd5461fb55ddc544bd8db2b7'; // Replace with your Airtable API key
-  const baseId = 'appNo45MQ8ifBdz6f'; // Replace with your Airtable base ID
+async function fetchCard(cardCode) {
+  const apiKey = 'pathzPdbSCEKZkZDi.eb39078e504fa6b1f4ecc919d7cd83c81832eb10bd5461fb55ddc544bd8db2b7';
+  const baseId = 'appNo45MQ8ifBdz6f';
   const tableName = 'cards';
 
-  const response = await fetch(`https://api.airtable.com/v0/${baseId}/${tableName}?filterByFormula={card_code}="${childCode}"`, {
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
-  });
+  const response = await fetch(
+    `https://api.airtable.com/v0/${baseId}/${tableName}?filterByFormula={card_code}="${cardCode}"`,
+    {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    }
+  );
 
   const data = await response.json();
-  return data.records.length > 0 ? data.records[0].fields.child_name : '';
+  if (data.records.length > 0) {
+    const fields = data.records[0].fields;
+    return [
+      fields.child_name || '',
+      fields.card_name || '',
+      fields.card_cellular || '',
+      fields.child_cellular || '',
+    ];
+  }
+
+  // Return empty array if not found
+  return ['', '', ''];
 }
 
 function ExercisePage() {
   const { eventCode, cardCode } = useParams();
   const [results, setResults] = useState(Array(10).fill(''));
   const [event, setEvent] = useState(null);
+  const [cardDetails, setCardDetails] = useState({
+    child_name: '',
+    card_name: '',
+    card_cellular: '',
+    child_cellular: '',
+  });
   const [childName, setChildName] = useState('');
   const [buttonColor, setButtonColor] = useState('rgb(33, 102, 120)');
   const [popupMessage, setPopupMessage] = useState('');
@@ -159,6 +180,12 @@ const handleImageUpload = (e) => {
     formData.append('card_code', event?.card_code || '');
     formData.append('event_counter', event?.event_counter ?? '');
 
+    // Append card details
+    formData.append('card_name', childName[1]);
+    formData.append('card_cellular', childName[2]);
+    formData.append('child_name', childName[0]);
+    formData.append('child_cellular', childName[3]);
+
     results.forEach((result, index) => {
       formData.append(`ex${index + 1}_result`, result.replace(/,/g, ''));
     });
@@ -179,23 +206,24 @@ const handleImageUpload = (e) => {
     setIsLoading(true)
     setPopupMessage('המערכת בודקת תוצאה.. בבקשה להמתין רגע');
 setPopupStyle({
-  position: 'fixed',
-  top: 0,
-  left: 0,
-  height: '100vh',   // full viewport height
-  width: '100vw',    // full viewport width
-  display: 'flex',   // flex container
-  justifyContent: 'center', // center horizontally
-  alignItems: 'center',     // center vertically
-  fontSize: '30px',
-  color: 'green',
-  fontWeight: 'bold',
-  textAlign: 'center',
-  zIndex: 9999,
-  backgroundColor: '#e0f7fa',
-  padding: '20px',
-  // no borderRadius needed when full screen, but you can keep if you want
-});
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    height: '100vh',             // full screen height
+    width: '100vw',              // full screen width
+    display: 'flex',             // flex container
+    justifyContent: 'center',    // center horizontally
+    alignItems: 'center',        // center vertically
+    flexDirection: 'column',     // ensure vertical layout
+    fontSize: '30px',
+    color: 'green',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    zIndex: 9999,
+    backgroundColor: '#e0f7fa',
+    padding: '20px',
+    boxSizing: 'border-box',     // avoid padding affecting layout
+  });
     setIsPopupVisible(true);
 
     // Wait 5 seconds before fetching updated score
@@ -210,12 +238,12 @@ setPopupStyle({
         if (updatedEvent) {
           setEvent(updatedEvent);
           setPopupMessage(
-  <div className="flex flex-col items-center justify-center h-full">
+  <div className="min-h-screen flex flex-col items-center justify-center">
   <p className="text-xl mb-4">
     מספר התשובות הנכונות הוא: {updatedEvent.score ?? 'N/A'}
   </p>
   <button  
-  className="text-blue-500 text-xl mb-4"
+  className="text-blue-500 text-xl mb-4 bg-transparent border-none cursor-pointer text-center"
   onClick={() => window.location.reload()}    
   style={{ 
     color: 'blue',
@@ -223,6 +251,7 @@ setPopupStyle({
     backgroundColor: 'transparent',
     border: 'none',
     cursor: 'pointer',
+    textAlign: 'center',
   }}
 >   
     כדי לראות את התרגילים והתשובות, לחץ כאן
@@ -235,11 +264,12 @@ setPopupStyle({
             position: 'fixed',
             top: 0,
             left: 0,
-            height: '100vh',   // full viewport height
-            width: '100vw',    // full viewport width
-            display: 'flex',   // flex container
-            justifyContent: 'center', // center horizontally
-            alignItems: 'center',     // center vertically
+            height: '100vh',             // full screen height
+            width: '100vw',              // full screen width
+            display: 'flex',             // flex container
+            justifyContent: 'center',    // center horizontally
+            alignItems: 'center',        // center vertically
+            flexDirection: 'column',     // ensure vertical layout
             fontSize: '30px',
             color: 'green',
             fontWeight: 'bold',
@@ -247,6 +277,7 @@ setPopupStyle({
             zIndex: 9999,
             backgroundColor: '#e0f7fa',
             padding: '20px',
+            boxSizing: 'border-box',     // avoid padding affecting layout
           });
           setIsCalculating(false);
         } else {
@@ -273,7 +304,7 @@ setPopupStyle({
     <div className="App">
       {event && event.event_counter >= 4 ? (
         <p className="welcome-message" dir="rtl" style={{ color: 'blue', fontWeight: 'bold' }}>
-          היי {childName || ''}, <br /> 
+          היי {childName[0] || ''}, <br /> 
           הסתיימו נסיונות הפתרון להיום. 
           מספר התשובות הנכונות הסופי להיום הוא:  {event?.score ?? 'N/A'} <br />
           מחר יהיו תרגילים חדשים.
@@ -282,7 +313,7 @@ setPopupStyle({
         <>
           {event && !error && popupMessage !== SUCCESS_MESSAGE && (
             <p className="welcome-message">
-  היי {childName || ''},<br />
+  היי {childName[0] || ''},<br />
   {event.event_counter === 0 && (
     <>
       הנה עשרת התרגילים שלך להיום. <br />
@@ -413,5 +444,3 @@ setPopupStyle({
 }
 
 export default  ExercisePage;
-
-

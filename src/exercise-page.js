@@ -3,61 +3,57 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import './App.css';
+import { createClient } from '@supabase/supabase-js';
+
 
 const LEVEL_WITH_IMAGE_REQUIREMENT = 6;
-// Airtable fetching function for events
+
+
+
+const supabaseUrl = 'https://kamhmwejfirhophsxdaq.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthbWhtd2VqZmlyaG9waHN4ZGFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNjkwMTksImV4cCI6MjA2Mzg0NTAxOX0.xgZppnVzA0wUQw1QgBgP4hodFqMsI1HlTwxWqtCy8BQ'; // Use the public anon key, not service role!
+const supabase = createClient(supabaseUrl, supabaseKey);
+
 async function fetchEvents() {
-  const apiKey = 'pathzPdbSCEKZkZDi.eb39078e504fa6b1f4ecc919d7cd83c81832eb10bd5461fb55ddc544bd8db2b7';
-  const baseId = 'appNo45MQ8ifBdz6f';
-  const tableName = 'events';
+  const { data, error } = await supabase
+    .from('events')
+    .select('*');
 
-  const response = await fetch(`https://api.airtable.com/v0/${baseId}/${tableName}`, {
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
-  });
+  if (error) {
+    console.error('Error fetching events:', error);
+    return [];
+  }
 
-  const data = await response.json();
-  return data.records.map((record) => ({
-    event_code: record.fields.event_code,
-    card_code: record.fields.card_code,
-    level: record.fields.level,
-    event_counter:
-      record.fields.event_counter !== undefined && record.fields.event_counter !== null
-        ? record.fields.event_counter
-        : 666,
-    ...record.fields,
+  return data.map((record) => ({
+    event_code: record.event_code,
+    card_code: record.card_code,
+    level: record.level,
+    event_counter: record.event_counter ?? 666,
+    ...record,
   }));
 }
 
+
 async function fetchCard(cardCode) {
-  const apiKey = 'pathzPdbSCEKZkZDi.eb39078e504fa6b1f4ecc919d7cd83c81832eb10bd5461fb55ddc544bd8db2b7';
-  const baseId = 'appNo45MQ8ifBdz6f';
-  const tableName = 'cards';
+  const { data, error } = await supabase
+    .from('cards')
+    .select('child_name, card_name, card_cellular, child_cellular')
+    .eq('card_code', cardCode)
+    .single();
 
-  const response = await fetch(
-    `https://api.airtable.com/v0/${baseId}/${tableName}?filterByFormula={card_code}="${cardCode}"`,
-    {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-    }
-  );
-
-  const data = await response.json();
-  if (data.records.length > 0) {
-    const fields = data.records[0].fields;
-    return [
-      fields.child_name || '',
-      fields.card_name || '',
-      fields.card_cellular || '',
-      fields.child_cellular || '',
-    ];
+  if (error) {
+    console.error('Error fetching card:', error);
+    return ['', '', '', ''];
   }
 
-  // Return empty array if not found
-  return ['', '', ''];
+  return [
+    data.child_name || '',
+    data.card_name || '',
+    data.card_cellular || '',
+    data.child_cellular || '',
+  ];
 }
+
 
 function ExercisePage() {
   const { eventCode, cardCode } = useParams();
@@ -107,7 +103,11 @@ function ExercisePage() {
         setResults(initialResults);
                 }
       else {
-        setError('אין קובץ תרגילים כזה');
+       setError(`קישור לא תקין ❗
+                  נראה שנכנסת לקישור שלא קיים או שכבר אינו פעיל.
+                  בבקשה בדוק שקיבלת את הקישור הנכון, ונסה שוב.
+
+                  אם הבעיה נמשכת – פנה אלינו ונשמח לעזור 😊`);
       }
     };
 
@@ -305,9 +305,11 @@ setPopupStyle({
       {event && event.event_counter >= 4 ? (
         <p className="welcome-message" dir="rtl" style={{ color: 'blue', fontWeight: 'bold' }}>
           היי {childName[0] || ''}, <br /> 
-          הסתיימו נסיונות הפתרון להיום. 
-          מספר התשובות הנכונות הסופי להיום הוא:  {event?.score ?? 'N/A'} <br />
-          מחר יהיו תרגילים חדשים.
+         נראה שניסית לפתוח קישור ישן שכבר לא עובד 😕 <br /> 
+        אבל אל דאגה! כל יום יש דף חדש עם תרגילים חדשים 🎯 <br /> 
+        אז תבדוק בוואטסאפ אם יש לך קישור חדש מהיום ✨ <br /> 
+
+        נתראה שם! 💪😊
         </p>
       ) : (
         <>
@@ -342,7 +344,10 @@ setPopupStyle({
 
           )}
 
-          {error && <p className="error-message" style={{ color: 'red' }}>{error}</p>}
+          {error && <p className="error-message" style={{ color: 'black', whiteSpace: 'pre-line',textAlign: 'center', }}>
+                         {error} 
+                    </p>
+          }
 
           {event && !error && popupMessage !== SUCCESS_MESSAGE && (
             <div className="drill-grid">
@@ -374,14 +379,22 @@ setPopupStyle({
       <span className="number-field">{formatNumber(right)}</span>
       <span className="equal-sign">=</span>
       <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            className={inputClass}
-            value={displayResult(results[i])}
-            placeholder="תוצאה"
-            onChange={(e) => handleResultChange(i, e)}
-          />
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          className={inputClass}
+          value={displayResult(results[i])}
+          placeholder="תוצאה"
+          onChange={(e) => handleResultChange(i, e)}
+          onFocus={() => {
+            if (response != null && response !== '' && response != answer) {
+              const clearedResults = [...results];
+              clearedResults[i] = '';
+              setResults(clearedResults);
+            }
+          }}
+        />
+
     </div>
   );
 })}

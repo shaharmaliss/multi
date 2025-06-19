@@ -301,4 +301,8 @@ html, body {
   color: #721c24;
 }
 
+.error-message {
+  white-space: pre-line;
+}
+
 

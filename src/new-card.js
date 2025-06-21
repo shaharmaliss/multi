@@ -14,8 +14,8 @@ function NewCard() {
     reminderHour: '',
   });
 
-  const levels = ['\u200E6 X 1', '\u200E4 X 3', '\u200E6 X 5', '\u200E9 X 7', '\u200E32 X 3', '\u200E87 X 9', 
-                  '\u200E48 X 19', '\u200E153 X 29','\u200E2,599 X 45', '\u200E39,550 X 322',];
+  const levels = ['\u200E6 X 1 (1', '\u200E4 X 3 (2', '\u200E6 X 5 (3', '\u200E7 X 6 (4','\u200E9 X 7 (5', '\u200E32 X 3 (6', '\u200E35 X 8 (7', 
+                   '\u200E89 X 9 (8', '\u200E48 X 19 (9', '\u200E153 X 29 (10','\u200E 2,599 X 45 (11', '\u200E9,550 X 322 (12'];
   const drillHours = ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
   const reminderHours = ['14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'];
 
@@ -159,9 +159,11 @@ function NewCard() {
           required
         >
           <option value="">בחירת רמת תרגילים להתחלה</option>
-          {levels.map((level) => (
-            <option key={level} value={level}>{level}</option>
-          ))}
+          {levels.map((level, index) => (
+              <option key={index} value={index + 1}>
+                {level}
+              </option>
+            ))}
         </select>
 
         <select

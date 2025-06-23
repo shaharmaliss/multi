@@ -157,6 +157,7 @@ function NewCard() {
           value={formData.level}
           onChange={handleChange}
           required
+          dir="rtl" 
         >
           <option value="">בחירת רמת תרגילים להתחלה</option>
           {levels.map((level, index) => (

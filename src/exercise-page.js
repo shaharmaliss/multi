@@ -150,8 +150,11 @@ const handleImageUpload = (e) => {
   }
 };
  const [isCalculating, setIsCalculating] = useState(false);
-
+ const [isSending, setIsSending] = useState(false);
+   
  const checkFieldsAndSend = async () => {
+  if (isSending) return;
+
   const allFieldsFilled = results.every((result) => result !== '');
 
   if (!allFieldsFilled) {
@@ -163,6 +166,8 @@ const handleImageUpload = (e) => {
     alert('נא להעלות תמונה לפני שליחה');
     return;
   }
+
+  setIsSending(true); // prevent further clicks
 
   try {
     const formData = new FormData();
@@ -291,6 +296,8 @@ setPopupStyle({
   } catch (err) {
     console.error('Error during upload or send:', err);
     alert('אירעה שגיאה בשליחה');
+  } finally {
+    setIsSending(false); // allow future send attempts if needed
   }
 };
 
@@ -425,7 +432,7 @@ setPopupStyle({
       style={{ backgroundColor: buttonColor, color: 'white' }}
       className="send-button"
       onClick={checkFieldsAndSend}
-      disabled={event?.event_counter >= 3}
+      disabled={event?.event_counter >= 3 || isSending}
     >
       לשלוח תוצאות
     </button>

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import './App.css';
 import { createClient } from '@supabase/supabase-js';
+import Lottie from "lottie-react";
 
 
 const LEVEL_WITH_IMAGE_REQUIREMENT = 6;
@@ -13,6 +14,76 @@ const LEVEL_WITH_IMAGE_REQUIREMENT = 6;
 const supabaseUrl = 'https://kamhmwejfirhophsxdaq.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthbWhtd2VqZmlyaG9waHN4ZGFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNjkwMTksImV4cCI6MjA2Mzg0NTAxOX0.xgZppnVzA0wUQw1QgBgP4hodFqMsI1HlTwxWqtCy8BQ'; // Use the public anon key, not service role!
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+
+async function getRandomAnimation(feedbackCategory) {
+    let folder = '';
+
+    // 1. Map Category to Folder Name
+    if (feedbackCategory === 'levelup10' || feedbackCategory === 'levelup89') {
+      folder = 'level_up';
+    } else if (feedbackCategory === 'score_excellent') {
+      folder = 'score_excellent';
+    } else if (feedbackCategory === 'score_high') {
+      folder = 'score_high';
+    } else if (feedbackCategory === 'score_medium') {
+      folder = 'score_medium';
+    } else if (feedbackCategory === 'score_low') {
+      folder = 'score_low';
+    } else {
+      console.warn('Unknown category for animation:', feedbackCategory);
+      return null;
+    }
+
+    try {
+      // 2. List all files in that folder
+      // Note: 'Lotties' is your Bucket name. Ensure case matches exactly in Supabase.
+      const { data: files, error } = await supabase
+        .storage
+        .from('Lotties') 
+        .list(folder, {
+          limit: 100,
+          offset: 0,
+          sortBy: { column: 'name', order: 'asc' },
+        });
+
+      if (error) {
+        console.error('Error listing Lottie files:', error);
+        return null;
+      }
+
+      if (!files || files.length === 0) {
+        console.warn(`No animations found in folder: ${folder}`);
+        return null;
+      }
+
+      // 3. Filter out system files (like .emptyFolderPlaceholder)
+      const validFiles = files.filter(f => f.name !== '.emptyFolderPlaceholder');
+      
+      if (validFiles.length === 0) return null;
+
+      // 4. Pick a random file
+      const randomFile = validFiles[Math.floor(Math.random() * validFiles.length)];
+
+      // 5. Get the Public URL
+      const { data: publicUrlData } = supabase
+        .storage
+        .from('Lotties')
+        .getPublicUrl(`${folder}/${randomFile.name}`);
+
+      // 6. Fetch the actual JSON content
+      const response = await fetch(publicUrlData.publicUrl);
+      const animationJson = await response.json();
+      
+      return animationJson;
+
+    } catch (err) {
+      console.error('Unexpected error loading animation:', err);
+      return null;
+    }
+  }
+
+
 
 async function fetchEvents() {
   const { data, error } = await supabase
@@ -37,13 +108,13 @@ async function fetchEvents() {
 async function fetchCard(cardCode) {
   const { data, error } = await supabase
     .from('cards')
-    .select('child_name, card_name, card_cellular, child_cellular')
+    .select('child_name, card_name, card_cellular, child_cellular, seq_days_good')
     .eq('card_code', cardCode)
     .single();
 
   if (error) {
     console.error('Error fetching card:', error);
-    return ['', '', '', ''];
+    return ['', '', '', '',0];
   }
 
   return [
@@ -51,9 +122,76 @@ async function fetchCard(cardCode) {
     data.card_name || '',
     data.card_cellular || '',
     data.child_cellular || '',
+    data.seq_days_good || 0
   ];
 }
 
+async function getFeedbackText(feedbackCategory, tries_left) {
+  let scoreType = '';
+  let isLevelUp = 'N';
+
+  // Map category to DB columns
+  if (feedbackCategory === 'levelup10') {
+    scoreType = 'score_excellent';
+    isLevelUp = 'Y';
+  } else if (feedbackCategory === 'levelup89') {
+    scoreType = 'score_high';
+    isLevelUp = 'Y';
+  } else if (feedbackCategory === 'score_excellent') {
+    scoreType = 'score_excellent';
+    isLevelUp = 'N';
+  } else if (feedbackCategory === 'score_high') {
+    scoreType = 'score_high';
+  } else if (feedbackCategory === 'score_medium') {
+    scoreType = 'score_medium';
+  } else if (feedbackCategory === 'score_low') {
+    scoreType = 'score_low';
+  }
+
+  console.log('Querying Supabase → ', scoreType, isLevelUp, tries_left);
+
+  // 1. Create Base Query
+  const baseQuery = supabase
+    .from('text_after_score')
+    .select('text')
+    .eq('score_type', scoreType)
+    .eq('level_up', isLevelUp);
+
+  let data = [];
+  
+  // 2. Try to find EXACT match for tries_left (only if not leveling up)
+  if (feedbackCategory !== 'levelup10' && feedbackCategory !== 'levelup89') {
+     // We use the integer variable 'tries_left' directly
+     const { data: specificData } = await baseQuery.eq('tries_left', tries_left);
+     data = specificData;
+  } else {
+     // If Level Up, we don't care about tries_left
+     const { data: levelUpData } = await baseQuery;
+     data = levelUpData;
+  }
+
+  // 3. FALLBACK: If specific search returned empty, search for a GENERIC message (tries_left IS NULL)
+  if (!data || data.length === 0) {
+      console.log(`No specific message for try ${tries_left}, looking for generic message...`);
+      
+      const { data: genericData } = await supabase
+        .from('text_after_score')
+        .select('text')
+        .eq('score_type', scoreType)
+        .eq('level_up', isLevelUp)
+        .is('tries_left', null); // .is check for NULL
+      
+      data = genericData;
+  }
+
+  if (!data || data.length === 0) {
+    console.warn('No feedback text found → fallback');
+    return 'כל הכבוד! המשך להתאמן!';
+  }
+
+  const randomIndex = Math.floor(Math.random() * data.length);
+  return data[randomIndex].text;
+}
 
 function ExercisePage() {
   const { eventCode, cardCode } = useParams();
@@ -121,7 +259,7 @@ const [uploadedFile, setUploadedFile] = useState(null);
     let value = e.target.value.replace(/,/g, '');
 
     if (value && !Number.isInteger(Number(value))) {
-      alert("הכנסת ערך לא נכון, רק ספרות מתקבלות");
+      alert('הכנסת ערך לא נכון, רק ספרות מתקבלות');
       value = '';
     } else {
       value = value !== '' ? parseInt(value).toLocaleString() : '';
@@ -158,7 +296,7 @@ const handleImageUpload = (e) => {
   const allFieldsFilled = results.every((result) => result !== '');
 
   if (!allFieldsFilled) {
-    alert("נא להשלים את כל התשובות לפני שליחה");
+    alert('נא להשלים את כל התשובות לפני שליחה');
     return;
   }
 
@@ -207,7 +345,7 @@ const handleImageUpload = (e) => {
       return;
     }
 
-    // Show "Calculating your result..." popup while waiting
+    // Show 'Calculating your result...' popup while waiting
     setIsLoading(true)
     setPopupMessage('המערכת בודקת תוצאה.. בבקשה להמתין רגע');
 setPopupStyle({
@@ -241,29 +379,136 @@ setPopupStyle({
             String(e.card_code) === String(cardCode)
         );
         if (updatedEvent) {
-          setEvent(updatedEvent);
-          setPopupMessage(
-  <div className="min-h-screen flex flex-col items-center justify-center">
-  <p className="text-xl mb-4">
-    מספר התשובות הנכונות הוא: {updatedEvent.score ?? 'N/A'}
-  </p>
-  <button  
-  className="text-blue-500 text-xl mb-4 bg-transparent border-none cursor-pointer text-center"
-  onClick={() => window.location.reload()}    
-  style={{ 
-    color: 'blue',
-    fontSize: '20px',
-    backgroundColor: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    textAlign: 'center',
-  }}
->   
-    כדי לראות את התרגילים והתשובות, לחץ כאן
-  </button>
-</div>
+          const event = updatedEvent; // Use this directly for logic
 
-);
+          setEvent(event); // UI state update only
+
+          const score = event.score ?? 0; // Always correct
+          const tries_left = 3-event.event_counter;
+          console.log('Fetched score:', score, tries_left,  3-event.event_counter);
+// Determine score_points
+let score_points = 0;
+if (score === 10) score_points = 2;
+else if (score === 9 || score === 8) score_points = 1;
+
+// Extract seq_days_good from card details
+const currentSeq = Number(childName[4] || 0);
+
+// Calculate next
+const nextSeq = currentSeq + score_points;
+
+let feedbackCategory = '';
+
+if (nextSeq >= 4) {
+  if (score === 10) {
+    feedbackCategory = 'levelup10';
+  } else if (score === 9 || score === 8) {
+    feedbackCategory = 'levelup89';
+  }
+} else if (score === 10) {
+  feedbackCategory = 'score_excellent';
+} else if (score === 9 || score === 8) {
+  feedbackCategory = 'score_high';
+} else if (score === 7 || score === 6) {
+  feedbackCategory = 'score_medium';
+} else {
+  feedbackCategory = 'score_low';
+}
+
+console.log('feedbackCategory', feedbackCategory);
+
+
+// ... inside setTimeout ...
+
+          console.log('Feedback:', { score, currentSeq, nextSeq, score_points, feedbackCategory, tries_left });
+
+          // 1. Get Text Feedback
+          const feedbackText = await getFeedbackText(feedbackCategory, tries_left);
+
+          // 2. Get Animation (NEW LOGIC)
+          let animationData = null;
+          try {
+            console.log("Fetching animation for category:", feedbackCategory);
+            animationData = await getRandomAnimation(feedbackCategory);
+          } catch (animErr) {
+            console.error("Animation failed to load:", animErr);
+          }
+
+          // --- 3. SHOW POPUP (Styled) ---
+          setPopupMessage(
+            <div 
+              className='min-h-screen flex flex-col items-center justify-center' 
+              dir='rtl' 
+              style={{
+                width: '100%', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center' // Ensures horizontal centering
+              }}
+            >
+              
+              {/* LOTTIE ANIMATION */}
+              {animationData && (
+                <div style={{ 
+                  width: '320px',        // BIGGER SIZE
+                  height: '320px',       
+                  marginBottom: '10px',  
+                  marginLeft: 'auto',    // Force Center
+                  marginRight: 'auto',   // Force Center
+                }}>
+                  <Lottie animationData={animationData} loop={true} />
+                </div>
+              )}
+
+              {/* SCORE TEXT */}
+              <p style={{ 
+                fontSize: '28px', 
+                fontWeight: 'bold',
+                color: '#333',         // Dark Grey for contrast
+                marginBottom: '10px',
+                textAlign: 'center',   // Force center alignment
+                fontFamily: 'Varela Round, sans-serif'
+              }}>
+                מספר התשובות הנכונות הוא: {score}
+              </p>
+
+              {/* FEEDBACK TEXT */}
+              <p style={{ 
+                fontSize: '32px',      // LARGER TEXT
+                fontWeight: 'bold',
+                color: '#00695c',      // Nice Teal/Green color
+                marginBottom: '30px', 
+                padding: '0 20px',
+                textAlign: 'center',   // Force center alignment
+                lineHeight: '1.4',
+                fontFamily: 'Varela Round, sans-serif'
+              }}>
+                {feedbackText}
+              </p>
+              
+              {/* BUTTON */}
+              <button
+                className='text-blue-500 text-xl bg-transparent border-none cursor-pointer'
+                onClick={() => window.location.reload()}
+                style={{ 
+                  color: '#1565c0',    // Stronger Blue
+                  fontSize: '22px',
+                  backgroundColor: 'transparent',
+                  border: '2px solid #1565c0', // Added a border to make it look like a button
+                  borderRadius: '50px',
+                  padding: '10px 30px',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  marginTop: '10px',
+                  fontWeight: 'bold'
+                }}
+              >
+                לתרגילים והתשובות
+              </button>
+            </div>
+          );
+
+
 
           setPopupStyle({
             position: 'fixed',
@@ -308,9 +553,9 @@ setPopupStyle({
   };
 
   return (
-    <div className="App">
+    <div className='App'>
       {event && event.event_counter >= 4 ? (
-        <p className="welcome-message" dir="rtl" style={{ color: 'blue', fontWeight: 'bold' }}>
+        <p className='welcome-message' dir='rtl' style={{ color: 'blue', fontWeight: 'bold' }}>
           היי {childName[0] || ''}, <br /> 
          נראה שניסית לפתוח קישור ישן שכבר לא עובד 😕 <br /> 
         אבל אל דאגה! כל יום יש דף חדש עם תרגילים חדשים 🎯 <br /> 
@@ -321,7 +566,7 @@ setPopupStyle({
       ) : (
         <>
           {event && !error && popupMessage !== SUCCESS_MESSAGE && (
-            <p className="welcome-message">
+            <p className='welcome-message'>
   היי {childName[0] || ''},<br />
   {event.event_counter === 0 && (
     <>
@@ -351,13 +596,13 @@ setPopupStyle({
 
           )}
 
-          {error && <p className="error-message" style={{ color: 'black', whiteSpace: 'pre-line',textAlign: 'center', }}>
+          {error && <p className='error-message' style={{ color: 'black', whiteSpace: 'pre-line',textAlign: 'center', }}>
                          {error} 
                     </p>
           }
 
           {event && !error && popupMessage !== SUCCESS_MESSAGE && (
-            <div className="drill-grid">
+            <div className='drill-grid'>
     {Array.from({ length: 10 }).map((_, i) => {
   const left = event?.[`ex${i + 1}_left`];
   const right = event?.[`ex${i + 1}_right`];
@@ -365,11 +610,11 @@ setPopupStyle({
   const answer = event?.[`ex${i + 1}_answer`];
 
   // Start with base class
-  let inputClass = "input-field result-field";
+  let inputClass = 'input-field result-field';
 
   // Add conditional color classes
-  if (response !== undefined && response !== null && response !== "") {
-    inputClass += response == answer ? " result-correct" : " result-wrong";
+  if (response !== undefined && response !== null && response !== '') {
+    inputClass += response == answer ? ' result-correct' : ' result-wrong';
   }
 
   // Determine value to show
@@ -379,19 +624,19 @@ setPopupStyle({
   val === '' || val === null || val === undefined ? '' : val;
 
   return (
-    <div key={i} className="drill-row" dir="ltr">
-      <span className="drill-number">{i + 1}.</span>
-      <span className="number-field">{formatNumber(left)}</span>
-      <span className="multiplication-sign">X</span>
-      <span className="number-field">{formatNumber(right)}</span>
-      <span className="equal-sign">=</span>
+    <div key={i} className='drill-row' dir='ltr'>
+      <span className='drill-number'>{i + 1}.</span>
+      <span className='number-field'>{formatNumber(left)}</span>
+      <span className='multiplication-sign'>X</span>
+      <span className='number-field'>{formatNumber(right)}</span>
+      <span className='equal-sign'>=</span>
       <input
-          type="text"
-          inputMode="numeric"
-          pattern="[0-9]*"
+          type='text'
+          inputMode='numeric'
+          pattern='[0-9]*'
           className={inputClass}
           value={displayResult(results[i])}
-          placeholder="תוצאה"
+          placeholder='תוצאה'
           onChange={(e) => handleResultChange(i, e)}
           onFocus={() => {
             if (response != null && response !== '' && response != answer) {
@@ -411,17 +656,17 @@ setPopupStyle({
           )}
 
 {event && !error && popupMessage !== SUCCESS_MESSAGE && (
-  <div className="button-row">
+  <div className='button-row'>
     {event?.level >= LEVEL_WITH_IMAGE_REQUIREMENT && (
       <>
-        <label htmlFor="file-upload" className="custom-upload">
+        <label htmlFor='file-upload' className='custom-upload'>
           📸 טיוטה
         </label>
         <input
-          id="file-upload"
-          type="file"
-          accept="image/*"
-          capture="environment"
+          id='file-upload'
+          type='file'
+          accept='image/*'
+          capture='environment'
           onChange={handleImageUpload}
           style={{ display: 'none' }}
         />
@@ -430,7 +675,7 @@ setPopupStyle({
 
     <button
       style={{ backgroundColor: buttonColor, color: 'white' }}
-      className="send-button"
+      className='send-button'
       onClick={checkFieldsAndSend}
       disabled={event?.event_counter >= 3 || isSending}
     >
@@ -441,12 +686,12 @@ setPopupStyle({
 
 
 {isPopupVisible && (
-  <div className="popup" style={popupStyle}>
+  <div className='popup' style={popupStyle}>
     {popupMessage}
 
     {popupMessage !== WAITING_MASSAGE ? (
       <button
-          className="close-popup"
+          className='close-popup'
           onClick={closePopup}
           style={{ color: 'blue', fontSize: '20px', whiteSpace: 'nowrap' }}
         >

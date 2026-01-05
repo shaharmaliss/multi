@@ -6,6 +6,7 @@
     "@supabase/supabase-js": "^2.50.0",
     "airtable": "^0.12.2",
     "cra-template": "1.2.0",
+    "lottie-react": "^2.4.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.1.1",

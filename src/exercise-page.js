@@ -467,7 +467,7 @@ const handleImageUpload = (e) => {
 
                     {/* SCORE TEXT */}
                     <p style={{ 
-                      fontSize: '28px', 
+                      fontSize: '26px', 
                       fontWeight: 'bold',
                       color: '#333',         
                       marginBottom: '10px',
@@ -480,7 +480,7 @@ const handleImageUpload = (e) => {
 
                     {/* FEEDBACK TEXT */}
                     <p style={{ 
-                      fontSize: '26px',      
+                      fontSize: '24px',      
                       fontWeight: 'bold',
                       color: '#00695c',      
                       marginBottom: '10px', 

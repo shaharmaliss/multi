@@ -456,9 +456,9 @@ const handleImageUpload = (e) => {
                     {/* LOTTIE ANIMATION */}
                     {animationData && (
                       <div style={{ 
-                        width: '320px',        
-                        height: '320px',       
-                        marginBottom: '10px',  
+                        width: '280px',        
+                        height: '280px',       
+                        marginBottom: '5px',  
                         flexShrink: 0          
                       }}>
                         <Lottie animationData={animationData} loop={true} />
@@ -467,7 +467,7 @@ const handleImageUpload = (e) => {
 
                     {/* SCORE TEXT */}
                     <p style={{ 
-                      fontSize: '28px', 
+                      fontSize: '22px', 
                       fontWeight: 'bold',
                       color: '#333',         
                       marginBottom: '10px',

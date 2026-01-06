@@ -291,260 +291,276 @@ const handleImageUpload = (e) => {
  const [isSending, setIsSending] = useState(false);
    
  const checkFieldsAndSend = async () => {
-  if (isSending) return;
+    if (isSending) return;
 
-  const allFieldsFilled = results.every((result) => result !== '');
+    const allFieldsFilled = results.every((result) => result !== '');
 
-  if (!allFieldsFilled) {
-    alert('נא להשלים את כל התשובות לפני שליחה');
-    return;
-  }
-
-  if (event?.level >= LEVEL_WITH_IMAGE_REQUIREMENT && !selectedFile) {
-    alert('נא להעלות תמונה לפני שליחה');
-    return;
-  }
-
-  setIsSending(true); // prevent further clicks
-
-  try {
-    const formData = new FormData();
-
-    if (selectedFile) {
-      const fileExtension = selectedFile.name.split('.').pop();
-      const fileName = `${event?.event_code || 'noevent'}_${event?.card_code || 'nocard'}.${fileExtension}`;
-      formData.append('file', selectedFile, fileName);
-    } else {
-      const emptyContent = new Blob(['empty file'], { type: 'text/plain' });
-      formData.append('file', emptyContent, 'empty.txt');
-    }
-
-    formData.append('event_code', event?.event_code || '');
-    formData.append('card_code', event?.card_code || '');
-    formData.append('event_counter', event?.event_counter ?? '');
-
-    // Append card details
-    formData.append('card_name', childName[1]);
-    formData.append('card_cellular', childName[2]);
-    formData.append('child_name', childName[0]);
-    formData.append('child_cellular', childName[3]);
-
-    results.forEach((result, index) => {
-      formData.append(`ex${index + 1}_result`, result.replace(/,/g, ''));
-    });
-
-    // Send the answers first
-    const response = await fetch('https://hook.eu2.make.com/41ke6o4sksybyisgobo8k25pfw25qaoh', {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      console.error('Failed to send data');
-      alert('שליחה נכשלה. נסה שוב מאוחר יותר.');
+    if (!allFieldsFilled) {
+      alert('נא להשלים את כל התשובות לפני שליחה');
       return;
     }
 
-    // Show 'Calculating your result...' popup while waiting
-    setIsLoading(true)
-    setPopupMessage('המערכת בודקת תוצאה.. בבקשה להמתין רגע');
-setPopupStyle({
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    height: '100vh',             // full screen height
-    width: '100vw',              // full screen width
-    display: 'flex',             // flex container
-    justifyContent: 'center',    // center horizontally
-    alignItems: 'center',        // center vertically
-    flexDirection: 'column',     // ensure vertical layout
-    fontSize: '30px',
-    color: 'green',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    zIndex: 9999,
-    backgroundColor: '#e0f7fa',
-    padding: '20px',
-    boxSizing: 'border-box',     // avoid padding affecting layout
-  });
-    setIsPopupVisible(true);
+    if (event?.level >= LEVEL_WITH_IMAGE_REQUIREMENT && !selectedFile) {
+      alert('נא להעלות תמונה לפני שליחה');
+      return;
+    }
 
-    // Wait 5 seconds before fetching updated score
-    setTimeout(async () => {
-      try {
-        const freshEvents = await fetchEvents();
-        const updatedEvent = freshEvents.find(
-          (e) =>
-            String(e.event_code) === String(eventCode) &&
-            String(e.card_code) === String(cardCode)
-        );
-        if (updatedEvent) {
-          const event = updatedEvent; // Use this directly for logic
+    setIsSending(true); // prevent further clicks
 
-          setEvent(event); // UI state update only
+    try {
+      const formData = new FormData();
 
-          const score = event.score ?? 0; // Always correct
-          const tries_left = 3-event.event_counter;
-          console.log('Fetched score:', score, tries_left,  3-event.event_counter);
-// Determine score_points
-let score_points = 0;
-if (score === 10) score_points = 2;
-else if (score === 9 || score === 8) score_points = 1;
+      if (selectedFile) {
+        const fileExtension = selectedFile.name.split('.').pop();
+        const fileName = `${event?.event_code || 'noevent'}_${event?.card_code || 'nocard'}.${fileExtension}`;
+        formData.append('file', selectedFile, fileName);
+      } else {
+        const emptyContent = new Blob(['empty file'], { type: 'text/plain' });
+        formData.append('file', emptyContent, 'empty.txt');
+      }
 
-// Extract seq_days_good from card details
-const currentSeq = Number(childName[4] || 0);
+      formData.append('event_code', event?.event_code || '');
+      formData.append('card_code', event?.card_code || '');
+      formData.append('event_counter', event?.event_counter ?? '');
 
-// Calculate next
-const nextSeq = currentSeq + score_points;
+      // Append card details
+      formData.append('card_name', childName[1]);
+      formData.append('card_cellular', childName[2]);
+      formData.append('child_name', childName[0]);
+      formData.append('child_cellular', childName[3]);
 
-let feedbackCategory = '';
+      results.forEach((result, index) => {
+        formData.append(`ex${index + 1}_result`, result.replace(/,/g, ''));
+      });
 
-if (nextSeq >= 4) {
-  if (score === 10) {
-    feedbackCategory = 'levelup10';
-  } else if (score === 9 || score === 8) {
-    feedbackCategory = 'levelup89';
-  }
-} else if (score === 10) {
-  feedbackCategory = 'score_excellent';
-} else if (score === 9 || score === 8) {
-  feedbackCategory = 'score_high';
-} else if (score === 7 || score === 6) {
-  feedbackCategory = 'score_medium';
-} else {
-  feedbackCategory = 'score_low';
-}
+      // Send the answers first
+      const response = await fetch('https://hook.eu2.make.com/41ke6o4sksybyisgobo8k25pfw25qaoh', {
+        method: 'POST',
+        body: formData,
+      });
 
-console.log('feedbackCategory', feedbackCategory);
+      if (!response.ok) {
+        console.error('Failed to send data');
+        alert('שליחה נכשלה. נסה שוב מאוחר יותר.');
+        return;
+      }
 
+      // Show 'Calculating your result...' popup while waiting
+      setIsLoading(true);
+      setPopupMessage('המערכת בודקת תוצאה.. בבקשה להמתין רגע');
+      setPopupStyle({
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        height: '100vh',
+        width: '100vw',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexDirection: 'column',
+        fontSize: '30px',
+        color: 'green',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        zIndex: 9999,
+        backgroundColor: '#e0f7fa',
+        padding: '20px',
+        boxSizing: 'border-box',
+      });
+      setIsPopupVisible(true);
 
-// ... inside setTimeout ...
+      // Wait 5 seconds before fetching updated score
+      setTimeout(async () => {
+        try {
+          const freshEvents = await fetchEvents();
+          const updatedEvent = freshEvents.find(
+            (e) =>
+              String(e.event_code) === String(eventCode) &&
+              String(e.card_code) === String(cardCode)
+          );
+          if (updatedEvent) {
+            const event = updatedEvent; 
 
-          console.log('Feedback:', { score, currentSeq, nextSeq, score_points, feedbackCategory, tries_left });
+            setEvent(event); 
 
-          // 1. Get Text Feedback
-          const feedbackText = await getFeedbackText(feedbackCategory, tries_left);
+            const score = event.score ?? 0; 
+            const tries_left = 3 - event.event_counter;
+            
+            // Determine score_points
+            let score_points = 0;
+            if (score === 10) score_points = 2;
+            else if (score === 9 || score === 8) score_points = 1;
 
-          // 2. Get Animation (NEW LOGIC)
-          let animationData = null;
-          try {
-            console.log("Fetching animation for category:", feedbackCategory);
-            animationData = await getRandomAnimation(feedbackCategory);
-          } catch (animErr) {
-            console.error("Animation failed to load:", animErr);
-          }
+            // Extract seq_days_good from card details
+            const currentSeq = Number(childName[4] || 0);
 
-          // --- 3. SHOW POPUP (Styled) ---
-          setPopupMessage(
-            <div 
-              className='min-h-screen flex flex-col items-center justify-center' 
-              dir='rtl' 
-              style={{
-                width: '100%', 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center' // Ensures horizontal centering
-              }}
-            >
-              
-              {/* LOTTIE ANIMATION */}
-              {animationData && (
-                <div style={{ 
-                  width: '320px',        // BIGGER SIZE
-                  height: '320px',       
-                  marginBottom: '10px',  
-                  marginLeft: 'auto',    // Force Center
-                  marginRight: 'auto',   // Force Center
-                }}>
-                  <Lottie animationData={animationData} loop={true} />
-                </div>
-              )}
+            // Calculate next
+            const nextSeq = currentSeq + score_points;
 
-              {/* SCORE TEXT */}
-              <p style={{ 
-                fontSize: '28px', 
-                fontWeight: 'bold',
-                color: '#333',         // Dark Grey for contrast
-                marginBottom: '10px',
-                textAlign: 'center',   // Force center alignment
-                fontFamily: 'Varela Round, sans-serif'
-              }}>
-                מספר התשובות הנכונות הוא: {score}
-              </p>
+            let feedbackCategory = '';
 
-              {/* FEEDBACK TEXT */}
-              <p style={{ 
-                fontSize: '32px',      // LARGER TEXT
-                fontWeight: 'bold',
-                color: '#00695c',      // Nice Teal/Green color
-                marginBottom: '30px', 
-                padding: '0 20px',
-                textAlign: 'center',   // Force center alignment
-                lineHeight: '1.4',
-                fontFamily: 'Varela Round, sans-serif'
-              }}>
-                {feedbackText}
-              </p>
-              
-              {/* BUTTON */}
-              <button
-                className='text-blue-500 text-xl bg-transparent border-none cursor-pointer'
-                onClick={() => window.location.reload()}
-                style={{ 
-                  color: '#1565c0',    // Stronger Blue
-                  fontSize: '22px',
-                  backgroundColor: 'transparent',
-                  border: '2px solid #1565c0', // Added a border to make it look like a button
-                  borderRadius: '50px',
-                  padding: '10px 30px',
-                  cursor: 'pointer',
-                  textAlign: 'center',
-                  marginTop: '10px',
-                  fontWeight: 'bold'
+            if (nextSeq >= 4) {
+              if (score === 10) {
+                feedbackCategory = 'levelup10';
+              } else if (score === 9 || score === 8) {
+                feedbackCategory = 'levelup89';
+              }
+            } else if (score === 10) {
+              feedbackCategory = 'score_excellent';
+            } else if (score === 9 || score === 8) {
+              feedbackCategory = 'score_high';
+            } else if (score === 7 || score === 6) {
+              feedbackCategory = 'score_medium';
+            } else {
+              feedbackCategory = 'score_low';
+            }
+
+            // 1. Get Text Feedback
+            const feedbackText = await getFeedbackText(feedbackCategory, tries_left);
+
+            // 2. Get Animation
+            let animationData = null;
+            try {
+              console.log("Fetching animation for category:", feedbackCategory);
+              animationData = await getRandomAnimation(feedbackCategory);
+            } catch (animErr) {
+              console.error("Animation failed to load:", animErr);
+            }
+
+            // --- 3. SHOW POPUP (FIXED LAYOUT) ---
+            setPopupMessage(
+              <div 
+                className='min-h-screen flex flex-col' 
+                dir='rtl' 
+                style={{
+                  width: '100%', 
+                  height: '100%',        
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  overflow: 'hidden'     
                 }}
               >
-                לתרגילים והתשובות
-              </button>
-            </div>
-          );
+                
+                {/* --- PART 1: SCROLLABLE CONTENT (Lottie + Text) --- */}
+                <div style={{
+                  flex: 1,               
+                  overflowY: 'auto',     
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center', 
+                  width: '100%',
+                  paddingBottom: '10px'  
+                }}>
+                
+                    {/* LOTTIE ANIMATION */}
+                    {animationData && (
+                      <div style={{ 
+                        width: '320px',        
+                        height: '320px',       
+                        marginBottom: '10px',  
+                        flexShrink: 0          
+                      }}>
+                        <Lottie animationData={animationData} loop={true} />
+                      </div>
+                    )}
 
+                    {/* SCORE TEXT */}
+                    <p style={{ 
+                      fontSize: '28px', 
+                      fontWeight: 'bold',
+                      color: '#333',         
+                      marginBottom: '10px',
+                      textAlign: 'center',   
+                      fontFamily: 'Varela Round, sans-serif',
+                      flexShrink: 0
+                    }}>
+                      מספר התשובות הנכונות הוא: {score}
+                    </p>
 
+                    {/* FEEDBACK TEXT */}
+                    <p style={{ 
+                      fontSize: '32px',      
+                      fontWeight: 'bold',
+                      color: '#00695c',      
+                      marginBottom: '10px', 
+                      padding: '0 20px',
+                      textAlign: 'center',   
+                      lineHeight: '1.4',
+                      fontFamily: 'Varela Round, sans-serif'
+                    }}>
+                      {feedbackText}
+                    </p>
 
-          setPopupStyle({
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            height: '100vh',             // full screen height
-            width: '100vw',              // full screen width
-            display: 'flex',             // flex container
-            justifyContent: 'center',    // center horizontally
-            alignItems: 'center',        // center vertically
-            flexDirection: 'column',     // ensure vertical layout
-            fontSize: '30px',
-            color: 'green',
-            fontWeight: 'bold',
-            textAlign: 'center',
-            zIndex: 9999,
-            backgroundColor: '#e0f7fa',
-            padding: '20px',
-            boxSizing: 'border-box',     // avoid padding affecting layout
-          });
-          setIsCalculating(false);
-        } else {
-          alert('לא ניתן לעדכן את התוצאה כרגע, נסה שוב מאוחר יותר.');
+                </div>
+
+                {/* --- PART 2: FIXED BUTTON AREA --- */}
+                <div style={{
+                  flexShrink: 0,         
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  paddingTop: '10px',
+                  paddingBottom: '10px', 
+                  backgroundColor: 'rgba(224, 247, 250, 0.9)' 
+                }}>
+                    <button
+                      className='text-blue-500 text-xl bg-transparent border-none cursor-pointer'
+                      onClick={() => window.location.reload()}
+                      style={{ 
+                        color: '#1565c0',    
+                        fontSize: '22px',
+                        backgroundColor: 'transparent',
+                        border: '2px solid #1565c0', 
+                        borderRadius: '50px',
+                        padding: '10px 30px',
+                        cursor: 'pointer',
+                        textAlign: 'center',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      לתרגילים והתשובות
+                    </button>
+                </div>
+
+              </div>
+            );
+
+            setPopupStyle({
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              height: '100vh',
+              width: '100vw',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexDirection: 'column',
+              fontSize: '30px',
+              color: 'green',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              zIndex: 9999,
+              backgroundColor: '#e0f7fa',
+              padding: '20px',
+              boxSizing: 'border-box',
+            });
+            setIsCalculating(false);
+          } else {
+            alert('לא ניתן לעדכן את התוצאה כרגע, נסה שוב מאוחר יותר.');
+          }
+        } catch (fetchErr) {
+          console.error('Error fetching updated event:', fetchErr);
         }
-      } catch (fetchErr) {
-        console.error('Error fetching updated event:', fetchErr);
-      }
-    }, 5000);
+      }, 5000);
 
-  } catch (err) {
-    console.error('Error during upload or send:', err);
-    alert('אירעה שגיאה בשליחה');
-  } finally {
-    setIsSending(false); // allow future send attempts if needed
-  }
-};
+    } catch (err) {
+      console.error('Error during upload or send:', err);
+      alert('אירעה שגיאה בשליחה');
+    } finally {
+      setIsSending(false); // allow future send attempts if needed
+    }
+  };
 
   const closePopup = () => {
     setIsPopupVisible(false);

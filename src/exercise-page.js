@@ -348,11 +348,13 @@ const handleImageUpload = (e) => {
       // Show 'Calculating your result...' popup while waiting
       setIsLoading(true);
       setPopupMessage('המערכת בודקת תוצאה.. בבקשה להמתין רגע');
+      
+      // FIX 1: Use 100dvh here for the loading screen too
       setPopupStyle({
         position: 'fixed',
         top: 0,
         left: 0,
-        height: '100vh',
+        height: '100dvh', // Changed from 100vh
         width: '100vw',
         display: 'flex',
         justifyContent: 'center',
@@ -456,9 +458,9 @@ const handleImageUpload = (e) => {
                     {/* LOTTIE ANIMATION */}
                     {animationData && (
                       <div style={{ 
-                        width: '280px',        
-                        height: '280px',       
-                        marginBottom: '5px',  
+                        width: '320px',        
+                        height: '320px',       
+                        marginBottom: '10px',  
                         flexShrink: 0          
                       }}>
                         <Lottie animationData={animationData} loop={true} />
@@ -467,7 +469,7 @@ const handleImageUpload = (e) => {
 
                     {/* SCORE TEXT */}
                     <p style={{ 
-                      fontSize: '26px', 
+                      fontSize: '28px', 
                       fontWeight: 'bold',
                       color: '#333',         
                       marginBottom: '10px',
@@ -480,7 +482,7 @@ const handleImageUpload = (e) => {
 
                     {/* FEEDBACK TEXT */}
                     <p style={{ 
-                      fontSize: '24px',      
+                      fontSize: '32px',      
                       fontWeight: 'bold',
                       color: '#00695c',      
                       marginBottom: '10px', 
@@ -501,7 +503,8 @@ const handleImageUpload = (e) => {
                   display: 'flex',
                   justifyContent: 'center',
                   paddingTop: '10px',
-                  paddingBottom: '10px', 
+                  // FIX 2: Calculated padding for all mobile devices
+                  paddingBottom: 'calc(40px + env(safe-area-inset-bottom))', 
                   backgroundColor: 'rgba(224, 247, 250, 0.9)' 
                 }}>
                     <button
@@ -526,11 +529,12 @@ const handleImageUpload = (e) => {
               </div>
             );
 
+            // FIX 3: Ensure the main popup container also uses 100dvh
             setPopupStyle({
               position: 'fixed',
               top: 0,
               left: 0,
-              height: '100vh',
+              height: '100dvh', // Changed from 100vh
               width: '100vw',
               display: 'flex',
               justifyContent: 'center',
@@ -542,7 +546,7 @@ const handleImageUpload = (e) => {
               textAlign: 'center',
               zIndex: 9999,
               backgroundColor: '#e0f7fa',
-              padding: '20px',
+              padding: '0px',
               boxSizing: 'border-box',
             });
             setIsCalculating(false);

@@ -469,7 +469,7 @@ const handleImageUpload = (e) => {
 
                     {/* SCORE TEXT */}
                     <p style={{ 
-                      fontSize: '28px', 
+                      fontSize: '22px', 
                       fontWeight: 'bold',
                       color: '#333',         
                       marginBottom: '10px',
@@ -482,7 +482,7 @@ const handleImageUpload = (e) => {
 
                     {/* FEEDBACK TEXT */}
                     <p style={{ 
-                      fontSize: '32px',      
+                      fontSize: '24px',      
                       fontWeight: 'bold',
                       color: '#00695c',      
                       marginBottom: '10px', 
@@ -504,7 +504,7 @@ const handleImageUpload = (e) => {
                   justifyContent: 'center',
                   paddingTop: '10px',
                   // FIX 2: Calculated padding for all mobile devices
-                  paddingBottom: 'calc(40px + env(safe-area-inset-bottom))', 
+                  paddingBottom: 'calc(20px + env(safe-area-inset-bottom))', 
                   backgroundColor: 'rgba(224, 247, 250, 0.9)' 
                 }}>
                     <button
@@ -512,10 +512,10 @@ const handleImageUpload = (e) => {
                       onClick={() => window.location.reload()}
                       style={{ 
                         color: '#1565c0',    
-                        fontSize: '22px',
+                        fontSize: '17px',
                         backgroundColor: 'transparent',
                         border: '2px solid #1565c0', 
-                        borderRadius: '50px',
+                        borderRadius: '45px',
                         padding: '10px 30px',
                         cursor: 'pointer',
                         textAlign: 'center',

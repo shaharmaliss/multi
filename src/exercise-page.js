@@ -465,7 +465,7 @@ function ExercisePage() {
                     )}
 
                     <p style={{ 
-                      fontSize: '28px', 
+                      fontSize: '22px', 
                       fontWeight: 'bold',
                       color: '#333',         
                       marginBottom: '10px',
@@ -477,7 +477,7 @@ function ExercisePage() {
                     </p>
 
                     <p style={{ 
-                      fontSize: '32px',      
+                      fontSize: '24px',      
                       fontWeight: 'bold',
                       color: '#0d47a1',  // Updated to Deep Blue for readability
                       marginBottom: '10px', 
